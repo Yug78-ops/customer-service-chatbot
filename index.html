@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TP Adhikari and Associates Chatbot</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="header">
+        <img src="static/images/logo.jpg" alt="Company Logo" class="logo">
+        <h1 style="font-size: medium">TP Adhikari and Associates Chatbot</h1>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+        <div class="bot-message initial-message">Hello! I am TP Adhikari and Associates Customer Services chatbot. How can we help you today? </div>
+    </div>
+
+    <!-- Suggested Questions (Buttons) -->
+    <div class="suggested-questions">
+        <button data-question="What are your key service areas?">Service Areas</button>
+        <button data-question="Who is the managing partner?">Managing Partner</button>
+        <button data-question="What is your company's vision?">Company Vision</button>
+        <button data-question="What are your core values?">Core Values</button>
+        <button data-question="Where is the office located?">Office Location</button>
+    </div>
+
+    <div class="chat-input">
+        <input type="text" id="message-input" placeholder="Type your queries...">
+        <button id="send-button">Send</button>
+    </div>
+</div>
+
+<script>
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const suggestedQuestions = document.querySelector('.suggested-questions'); // Get suggested questions container
+
+    sendButton.addEventListener('click', sendMessage);
+
+    // Add event listener for "Enter" key
+    messageInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent default behavior (newline)
+            sendMessage();
+        }
+    });
+
+    // Event listener for suggested questions
+    suggestedQuestions.addEventListener('click', function(event) {
+        if (event.target.tagName === 'BUTTON') {
+            messageInput.value = event.target.dataset.question;
+            // Optionally, send the message automatically:
+            sendMessage(); // Uncomment to send automatically
+        }
+    });
+
+    function sendMessage() {
+        const message = messageInput.value;
+        if (message.trim() === '') return;
+
+        appendMessage('user-message', message);
+        messageInput.value = '';
+
+        fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.response) {
+                appendMessage('bot-message', data.response);
+            } else if (data.error) {
+                appendMessage('bot-message', `Error: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            appendMessage('bot-message', 'Sorry, an error occurred.');
+        });
+    }
+
+    function appendMessage(senderClass, message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add(senderClass);
+        messageDiv.innerHTML = message;
+
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+</script>
+<div class="bot-message">
+    <span class="bot-response-text">
+        <br><br>
+    </span>
+</div>
+</body>
+</html>

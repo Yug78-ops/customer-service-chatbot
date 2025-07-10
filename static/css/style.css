@@ -1,0 +1,169 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa; /* Light gray background */
+    margin: 0;
+    padding: 0;
+    display: flex; /* Use flexbox for centering the chat container */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Ensure the body takes up at least the full viewport height */
+}
+
+.chat-container {
+    width: 500px;
+    /* margin: 30px auto; Remove this margin as flexbox will handle centering */
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
+    display: flex;          /* Enable flex layout */
+    flex-direction: column; /* Stack header, messages, input vertically */
+    height: 90vh;           /* Occupy 90% of the viewport height */
+}
+
+/* Header Styling */
+.header {
+    background-color: #007bff; /* Primary logo color */
+    color: white;
+    padding: 15px;          /* Reduced padding */
+    text-align: center;
+    font-size: 1.5em;       /* Adjusted font size */
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;         /* Prevent shrinking */
+}
+
+.header .logo {
+    width: 50px;            /* Adjusted logo size */
+    height: 50px;
+    margin-right: 15px;      /* Reduced margin */
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Chat Messages Styling */
+.chat-messages {
+    flex-grow: 1;           /* Allow messages to take up remaining space */
+    overflow-y: auto;       /* Changed from scroll to auto */
+    padding: 15px;
+    display: flex;
+    flex-direction: column; /* Stack messages vertically */
+}
+
+/* General message styling */
+.user-message,
+.bot-message {
+    color: #555;
+    line-height: 1.4;       /* Adjusted line height */
+    margin-bottom: 8px;      /* Reduced margin */
+    padding: 10px 12px;     /* Added padding to messages */
+    border-radius: 8px;      /* Rounded message corners */
+    max-width: 80%;          /* Limit message width */
+    word-break: break-word; /* Prevent long words from overflowing */
+}
+
+/* User message */
+.user-message {
+    text-align: right;
+    align-self: flex-end;
+    background-color: #e2f3ff;
+    color: #333;
+}
+
+/* Bot message */
+.bot-message {
+    text-align: left;
+    align-self: flex-start;
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.bot-message .bot-response-text {
+    color: #555;
+}
+
+/* Chat Input Styling */
+.chat-input {
+    padding: 10px;          /* Reduced padding */
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #ddd;
+    flex-shrink: 0;         /* Prevent shrinking */
+}
+
+#message-input {
+    width: 75%;             /* Adjusted width */
+    padding: 10px;          /* Reduced padding */
+    border: 1px solid #ddd;
+    border-radius: 6px;      /* Adjusted corner radius */
+    margin-right: 8px;       /* Reduced margin */
+    font-size: 1em;
+}
+
+#send-button {
+    width: 25%;             /* Adjusted width */
+    padding: 10px;          /* Reduced padding */
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;      /* Adjusted corner radius */
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 1em;
+}
+
+#send-button:hover {
+    background-color: #0056b3;
+}
+
+/* Initial Message Styling */
+.initial-message {
+    color: #777;
+    font-style: italic;
+    padding: 10px 14px;     /* Reduced padding */
+    border-radius: 20px;     /* Adjusted corner radius */
+    background-color: #fff;
+    border: 1px solid #ddd;
+    display: inline-block;
+    max-width: 70%;          /* Adjusted width */
+    margin-bottom: 10px;     /* Reduced margin */
+}
+
+/* Suggested Questions Styling */
+.suggested-questions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 10px;
+    padding: 0 10px;
+}
+
+.suggested-questions button {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;      /* Adjusted corner radius */
+    padding: 6px 10px;      /* Reduced padding */
+    margin: 4px;
+    cursor: pointer;
+    font-size: 0.85em;      /* Adjusted font size */
+    transition: background-color 0.2s; /*Added transition*/
+}
+
+.suggested-questions button:hover {
+    background-color: #e0e0e0;
+}
+
+@media (max-width: 600px) {
+    .chat-container {
+        width: 95%; /* Take up more width on small screens */
+        height: 95vh;
+    }
+    .header {
+        font-size: 1.2em;
+    }
+    .suggested-questions button {
+        font-size: 0.8em;
+    }
+}
