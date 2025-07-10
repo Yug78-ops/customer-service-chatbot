@@ -1,6 +1,6 @@
 Flask==3.0.0
 google-generativeai==0.4.1
 python-dotenv==1.0.1
-PyPDF2==4.0.0
+PyPDF2
 Flask-Cors==4.0.0
 bleach==6.1.0
