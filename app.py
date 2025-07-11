@@ -8,16 +8,16 @@ from flask_cors import CORS  # Import CORS
 import bleach
 
 app = Flask(__name__, static_folder="static")  # Specify static folder
-CORS(app)  # Enable CORS for all routes (DEVELOPMENT ONLY)
+CORS(app)  # Enable CORS for all routes
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Get Gemini API key from environment variables
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
 if not GOOGLE_API_KEY:
-    raise ValueError("Please set the GOOGLE_API_KEY environment variable.")
+    raise ValueError("Please set the GOOGLE_API_KEY or GEMINI_API_KEY environment variable.")
 
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
@@ -101,5 +101,6 @@ def chat():
         return jsonify({"error": f"An error occurred: {e}"}), 500
 
 
+# For local development
 if __name__ == '__main__':
-    app.run(debug=True) #Disable debug mode in production
+    app.run(debug=True)
