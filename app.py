@@ -73,6 +73,26 @@ def get_styled_response(text):
 def index():
     return send_from_directory('.', 'index.html')  # Serve index.html
 
+# Route to serve static files
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory('static', filename)
+
+# Route to serve CSS files
+@app.route('/static/css/<path:filename>')
+def css_files(filename):
+    return send_from_directory('static/css', filename)
+
+# Route to serve JS files
+@app.route('/static/js/<path:filename>')
+def js_files(filename):
+    return send_from_directory('static/js', filename)
+
+# Route to serve image files
+@app.route('/static/images/<path:filename>')
+def image_files(filename):
+    return send_from_directory('static/images', filename)
+
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.get_json()
@@ -104,3 +124,7 @@ def chat():
 # For local development
 if __name__ == '__main__':
     app.run(debug=True)
+
+# For Vercel deployment
+def application(environ, start_response):
+    return app(environ, start_response)
