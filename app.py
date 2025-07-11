@@ -121,10 +121,9 @@ def chat():
         return jsonify({"error": f"An error occurred: {e}"}), 500
 
 
+# For Vercel deployment - expose the app instance
+application = app
+
 # For local development
 if __name__ == '__main__':
     app.run(debug=True)
-
-# For Vercel deployment
-def application(environ, start_response):
-    return app(environ, start_response)

@@ -21,7 +21,7 @@ function sendMessage() {
     appendMessage('user-message', message);
     messageInput.value = '';
 
-    fetch('/chat', {  // Endpoint for Flask route
+    fetch('/api/chat', {  // Vercel serverless function endpoint
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
