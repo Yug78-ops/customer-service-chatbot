@@ -2,23 +2,30 @@ from http.server import BaseHTTPRequestHandler
 import json
 import os
 import urllib.parse
+import sys
 
+# Print Python version for debugging
+print(f"Python version: {sys.version}")
+
+# Import Google Generative AI
 try:
     import google.generativeai as genai
+    print("Successfully imported google.generativeai")
     GENAI_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    print(f"Failed to import google.generativeai: {e}")
     GENAI_AVAILABLE = False
 
-try:
-    import PyPDF2
-    PYPDF2_AVAILABLE = True
-except ImportError:
-    PYPDF2_AVAILABLE = False
+# We don't need PyPDF2 for serverless, so we'll skip it
+PYPDF2_AVAILABLE = False
 
+# Import bleach for HTML sanitization
 try:
     import bleach
+    print("Successfully imported bleach")
     BLEACH_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    print(f"Failed to import bleach: {e}")
     BLEACH_AVAILABLE = False
 
 # Get Gemini API key from environment variables
@@ -31,13 +38,16 @@ if GOOGLE_API_KEY and (GOOGLE_API_KEY.startswith('"') and GOOGLE_API_KEY.endswit
 # Initialize the model if we have the API key and the library
 if GOOGLE_API_KEY and GENAI_AVAILABLE:
     try:
+        print(f"Configuring Gemini API with key: {GOOGLE_API_KEY[:5]}...{GOOGLE_API_KEY[-4:]} (key truncated for security)")
         genai.configure(api_key=GOOGLE_API_KEY)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        # Use gemini-1.0-pro instead as it's more widely available and stable
+        model = genai.GenerativeModel('gemini-1.0-pro')
         print("Successfully configured the Gemini model")
     except Exception as config_error:
         print(f"Error configuring Gemini: {config_error}")
         model = None
 else:
+    print(f"API Key available: {bool(GOOGLE_API_KEY)}, GENAI_AVAILABLE: {GENAI_AVAILABLE}")
     model = None
 
 def load_pdf_content():
@@ -107,34 +117,74 @@ class handler(BaseHTTPRequestHandler):
             company_info = load_pdf_content()
             
             try:
-                # Construct a prompt that includes the company information
-                prompt = f"""You are a customer service chatbot representing a professional audit and advisory firm. 
-                Always respond as if you are a trusted and knowledgeable employee of the firm, never as a third party. 
-                Your tone should be professional, respectful, and client-focused, aiming to provide clear, concise information.
-                Use only the information below as the basis for your answers:
+                # Check if model is properly initialized
+                if model is None:
+                    response = {"error": "Gemini model initialization failed. Please check your API key and try again."}
+                    self.wfile.write(json.dumps(response).encode('utf-8'))
+                    return
                 
-                {company_info}
+                # Simple prompt to test API functionality
+                prompt = f"""You are a helpful customer service chatbot for an audit and financial advisory firm.
                 
-                User Question: {user_message}"""
+                Question: {user_message}
                 
-                # Generate response using the API
-                response_obj = model.generate_content(prompt)
+                Please respond briefly and professionally."""
+                
+                print(f"Sending prompt to Gemini API, length: {len(prompt)} characters")
+                
+                # Generate response with safety parameters
+                safety_settings = [
+                    {
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_NONE",
+                    },
+                ]
+                
+                generation_config = {
+                    "temperature": 0.7,
+                    "top_p": 0.8,
+                    "top_k": 40,
+                    "max_output_tokens": 200,
+                }
+                
+                # Generate response using the API with safety settings
+                response_obj = model.generate_content(
+                    prompt, 
+                    safety_settings=safety_settings,
+                    generation_config=generation_config
+                )
+                
+                print("API response received")
                 
                 if hasattr(response_obj, 'text'):
                     gemini_response = response_obj.text
+                    print(f"Response text length: {len(gemini_response)} characters")
                 else:
-                    gemini_response = "Sorry, I encountered an error generating a response."
+                    print("No text attribute in response")
+                    print(f"Response object: {str(response_obj)}")
+                    gemini_response = "Thank you for your question. As a customer service representative, I'd be happy to help with your inquiry about our services."
                 
                 styled_response = get_styled_response(gemini_response)
                 response = {"response": styled_response}
                 
             except Exception as api_error:
-                print(f"API Error: {api_error}")
-                response = {"error": f"API error: {str(api_error)}"}
+                print(f"API Error: {str(api_error)}")
+                # Provide a fallback response instead of an error
+                fallback_response = "Thank you for your question. I'm currently experiencing some technical difficulties. Please try again in a moment or contact our support team for immediate assistance."
+                styled_fallback = get_styled_response(fallback_response)
+                response = {"response": styled_fallback}
             
             self.wfile.write(json.dumps(response).encode('utf-8'))
 
         except Exception as e:
-            print(f"Server Error: {e}")
-            response = {"error": f"Server error: {str(e)}"}
-            self.wfile.write(json.dumps(response).encode('utf-8'))
+            print(f"Server Error: {str(e)}")
+            # Always return a user-friendly response rather than exposing the error
+            fallback_response = "Thank you for your message. Our system is currently experiencing some technical difficulties. Please try again later or contact our support team for assistance."
+            styled_fallback = f"<span class='bot-response-text'>{fallback_response}</span>"
+            response = {"response": styled_fallback}
+            try:
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+            except:
+                # Last resort if even the error handling fails
+                simple_response = {"response": "System error. Please try again."}
+                self.wfile.write(json.dumps(simple_response).encode('utf-8'))
