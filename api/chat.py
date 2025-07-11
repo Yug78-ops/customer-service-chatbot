@@ -24,16 +24,34 @@ except ImportError:
 # Get Gemini API key from environment variables
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
+# Strip quotes if they exist (sometimes environment variables have quotes)
+if GOOGLE_API_KEY and (GOOGLE_API_KEY.startswith('"') and GOOGLE_API_KEY.endswith('"')) or (GOOGLE_API_KEY.startswith("'") and GOOGLE_API_KEY.endswith("'")):
+    GOOGLE_API_KEY = GOOGLE_API_KEY[1:-1]
+
+# Initialize the model if we have the API key and the library
 if GOOGLE_API_KEY and GENAI_AVAILABLE:
-    genai.configure(api_key=GOOGLE_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    try:
+        genai.configure(api_key=GOOGLE_API_KEY)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        print("Successfully configured the Gemini model")
+    except Exception as config_error:
+        print(f"Error configuring Gemini: {config_error}")
+        model = None
+else:
+    model = None
 
 def load_pdf_content():
     """Load company information - simplified for serverless"""
-    # For now, return a placeholder. In production, you might want to load this differently
+    # In serverless environment, we can't rely on loading local files the same way
+    # So we use a placeholder text that contains our company information
     return """
-    We are a customer service company that provides excellent support and solutions to our clients.
-    Our services include technical support, customer inquiries, and comprehensive assistance.
+    Our company offers comprehensive audit and advisory services to businesses of all sizes.
+    We specialize in financial audits, tax advisory, risk management, and business consulting.
+    Our team of certified professionals ensures compliance with all regulatory requirements.
+    We provide personalized solutions tailored to each client's unique needs and challenges.
+    Our services include annual financial statement audits, internal control assessments,
+    tax planning and compliance, due diligence for mergers and acquisitions, and strategic business advice.
+    We pride ourselves on maintaining the highest standards of integrity, confidentiality, and professional excellence.
     """
 
 def get_styled_response(text):
@@ -75,30 +93,48 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(response).encode('utf-8'))
                 return
 
-            if not GOOGLE_API_KEY or not GENAI_AVAILABLE:
-                response = {"error": "API not properly configured"}
+            if not GOOGLE_API_KEY:
+                response = {"error": "API key not found in environment variables"}
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+                return
+                
+            if not GENAI_AVAILABLE:
+                response = {"error": "Google Generative AI module not available"}
                 self.wfile.write(json.dumps(response).encode('utf-8'))
                 return
 
             # Load company info
             company_info = load_pdf_content()
             
-            # Construct a prompt that includes the company information
-            prompt = f"Company Information:\n{company_info}\n\nUser Question: {user_message}\n\nPlease answer the user's question based on the company information provided. If the question is not related to the company or its services, politely redirect the conversation back to company-related topics."
-
-            response_obj = model.generate_content(prompt)
-            
-            if hasattr(response_obj, 'text'):
-                gemini_response = response_obj.text
-            else:
-                gemini_response = "Sorry, I encountered an error generating a response."
-
-            styled_response = get_styled_response(gemini_response)
-            response = {"response": styled_response}
+            try:
+                # Construct a prompt that includes the company information
+                prompt = f"""You are a customer service chatbot representing a professional audit and advisory firm. 
+                Always respond as if you are a trusted and knowledgeable employee of the firm, never as a third party. 
+                Your tone should be professional, respectful, and client-focused, aiming to provide clear, concise information.
+                Use only the information below as the basis for your answers:
+                
+                {company_info}
+                
+                User Question: {user_message}"""
+                
+                # Generate response using the API
+                response_obj = model.generate_content(prompt)
+                
+                if hasattr(response_obj, 'text'):
+                    gemini_response = response_obj.text
+                else:
+                    gemini_response = "Sorry, I encountered an error generating a response."
+                
+                styled_response = get_styled_response(gemini_response)
+                response = {"response": styled_response}
+                
+            except Exception as api_error:
+                print(f"API Error: {api_error}")
+                response = {"error": f"API error: {str(api_error)}"}
             
             self.wfile.write(json.dumps(response).encode('utf-8'))
 
         except Exception as e:
-            print(f"Error: {e}")
-            response = {"error": f"An error occurred: {str(e)}"}
+            print(f"Server Error: {e}")
+            response = {"error": f"Server error: {str(e)}"}
             self.wfile.write(json.dumps(response).encode('utf-8'))
