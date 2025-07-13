@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler
 import json
+import os
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -9,13 +10,11 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         
         response = {
-            "message": "API is working!",
-            "endpoints": [
-                "/api/test",
-                "/api/chat", 
-                "/api/debug"
-            ],
-            "status": "success"
+            "message": "Debug endpoint working!",
+            "status": "success",
+            "vercel_region": os.environ.get('VERCEL_REGION', 'not-set'),
+            "vercel_env": os.environ.get('VERCEL_ENV', 'not-set'),
+            "current_dir": os.getcwd()
         }
         
         self.wfile.write(json.dumps(response, indent=2).encode('utf-8'))

@@ -1,16 +1,8 @@
-from flask import Flask, send_from_directory
-import os
+# This file is no longer needed for Vercel deployment
+# Vercel uses serverless functions in the /api directory
+# and serves static files automatically
 
-# Create a simple app that just serves static files
-app = Flask(__name__)
+# If you need to run locally for testing, you can use:
+# python -m http.server 8000
 
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve(path):
-    if path != "" and os.path.exists(path):
-        return send_from_directory(".", path)
-    else:
-        return send_from_directory(".", "index.html")
-
-# For Vercel deployment
-app = app
+print("This app is deployed using Vercel serverless functions.")
