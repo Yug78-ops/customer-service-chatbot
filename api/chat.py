@@ -7,19 +7,11 @@ import sys
 # Print Python version for debugging
 print(f"Python version: {sys.version}")
 
-# Import Google Generative AI
-try:
-    import google.generativeai as genai
-    print("Successfully imported google.generativeai")
-    GENAI_AVAILABLE = True
-except ImportError as e:
-    print(f"Failed to import google.generativeai: {e}")
-    GENAI_AVAILABLE = False
-
-# We don't need PyPDF2 for serverless, so we'll skip it
+# Skip all AI-related imports to avoid any potential issues
+GENAI_AVAILABLE = False
 PYPDF2_AVAILABLE = False
 
-# Import bleach for HTML sanitization
+# Import bleach for HTML sanitization (if available)
 try:
     import bleach
     print("Successfully imported bleach")
@@ -28,27 +20,11 @@ except ImportError as e:
     print(f"Failed to import bleach: {e}")
     BLEACH_AVAILABLE = False
 
-# Get Gemini API key from environment variables
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+# Set up dummy variables to avoid errors
+GOOGLE_API_KEY = None
+model = None
 
-# Strip quotes if they exist (sometimes environment variables have quotes)
-if GOOGLE_API_KEY and (GOOGLE_API_KEY.startswith('"') and GOOGLE_API_KEY.endswith('"')) or (GOOGLE_API_KEY.startswith("'") and GOOGLE_API_KEY.endswith("'")):
-    GOOGLE_API_KEY = GOOGLE_API_KEY[1:-1]
-
-# Initialize the model if we have the API key and the library
-if GOOGLE_API_KEY and GENAI_AVAILABLE:
-    try:
-        print(f"Configuring Gemini API with key: {GOOGLE_API_KEY[:5]}...{GOOGLE_API_KEY[-4:]} (key truncated for security)")
-        genai.configure(api_key=GOOGLE_API_KEY)
-        # Use gemini-1.0-pro instead as it's more widely available and stable
-        model = genai.GenerativeModel('gemini-1.0-pro')
-        print("Successfully configured the Gemini model")
-    except Exception as config_error:
-        print(f"Error configuring Gemini: {config_error}")
-        model = None
-else:
-    print(f"API Key available: {bool(GOOGLE_API_KEY)}, GENAI_AVAILABLE: {GENAI_AVAILABLE}")
-    model = None
+print("Running in simplified mode with hardcoded responses")
 
 def load_pdf_content():
     """Load company information - simplified for serverless"""
@@ -65,12 +41,9 @@ def load_pdf_content():
     """
 
 def get_styled_response(text):
-    if BLEACH_AVAILABLE:
-        sanitized_text = bleach.clean(text, tags=['p', 'br', 'span'], attributes={'span': ['style', 'class']})
-        styled_text = f"<span class='bot-response-text'>{sanitized_text}</span>"
-        return styled_text
-    else:
-        return f"<span class='bot-response-text'>{text}</span>"
+    # Simplified styling function that doesn't depend on bleach
+    # Simply wrap the text in a span with the bot-response-text class
+    return f"<span class='bot-response-text'>{text}</span>"
 
 class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -103,16 +76,7 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(response).encode('utf-8'))
                 return
 
-            if not GOOGLE_API_KEY:
-                response = {"error": "API key not found in environment variables"}
-                self.wfile.write(json.dumps(response).encode('utf-8'))
-                return
-                
-            if not GENAI_AVAILABLE:
-                response = {"error": "Google Generative AI module not available"}
-                self.wfile.write(json.dumps(response).encode('utf-8'))
-                return
-
+            # Skip all API checks and proceed directly with hardcoded responses
             # Load company info
             company_info = load_pdf_content()
             
