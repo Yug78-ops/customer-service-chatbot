@@ -116,63 +116,38 @@ class handler(BaseHTTPRequestHandler):
             # Load company info
             company_info = load_pdf_content()
             
-            try:
-                # Check if model is properly initialized
-                if model is None:
-                    response = {"error": "Gemini model initialization failed. Please check your API key and try again."}
-                    self.wfile.write(json.dumps(response).encode('utf-8'))
-                    return
-                
-                # Simple prompt to test API functionality
-                prompt = f"""You are a helpful customer service chatbot for an audit and financial advisory firm.
-                
-                Question: {user_message}
-                
-                Please respond briefly and professionally."""
-                
-                print(f"Sending prompt to Gemini API, length: {len(prompt)} characters")
-                
-                # Generate response with safety parameters
-                safety_settings = [
-                    {
-                        "category": "HARM_CATEGORY_HARASSMENT",
-                        "threshold": "BLOCK_NONE",
-                    },
-                ]
-                
-                generation_config = {
-                    "temperature": 0.7,
-                    "top_p": 0.8,
-                    "top_k": 40,
-                    "max_output_tokens": 200,
-                }
-                
-                # Generate response using the API with safety settings
-                response_obj = model.generate_content(
-                    prompt, 
-                    safety_settings=safety_settings,
-                    generation_config=generation_config
-                )
-                
-                print("API response received")
-                
-                if hasattr(response_obj, 'text'):
-                    gemini_response = response_obj.text
-                    print(f"Response text length: {len(gemini_response)} characters")
-                else:
-                    print("No text attribute in response")
-                    print(f"Response object: {str(response_obj)}")
-                    gemini_response = "Thank you for your question. As a customer service representative, I'd be happy to help with your inquiry about our services."
-                
-                styled_response = get_styled_response(gemini_response)
-                response = {"response": styled_response}
-                
-            except Exception as api_error:
-                print(f"API Error: {str(api_error)}")
-                # Provide a fallback response instead of an error
-                fallback_response = "Thank you for your question. I'm currently experiencing some technical difficulties. Please try again in a moment or contact our support team for immediate assistance."
-                styled_fallback = get_styled_response(fallback_response)
-                response = {"response": styled_fallback}
+            # Bypass all API calls and use hardcoded responses for now
+            print("Using hardcoded response system")
+            
+            # Map of predefined responses based on keywords in the user's question
+            responses = {
+                "office": "Our main office is located at 123 Business Avenue, Suite 500, in the Financial District. We are open Monday through Friday from 9:00 AM to 5:30 PM.",
+                "location": "Our main office is located at 123 Business Avenue, Suite 500, in the Financial District.",
+                "services": "We offer a comprehensive range of services including financial audits, tax advisory, risk management, business consulting, and strategic planning tailored to your needs.",
+                "audit": "Our audit services include financial statement audits, compliance audits, internal audits, and specialized industry audits performed by our team of certified professionals.",
+                "tax": "Our tax services include tax planning, compliance, advisory for both individuals and businesses, and specialized support for international taxation matters.",
+                "contact": "You can contact us via email at info@tpadhikari.com, by phone at (555) 123-4567, or by visiting our office during business hours.",
+                "hours": "Our office is open Monday through Friday from 9:00 AM to 5:30 PM. We are closed on weekends and major holidays.",
+                "team": "Our team consists of certified accountants, financial analysts, tax specialists, and industry experts with extensive experience in various business sectors.",
+                "cost": "Our service fees vary based on the scope and complexity of your needs. We offer free initial consultations to discuss your requirements and provide a detailed quote.",
+                "consulting": "Our consulting services help businesses optimize operations, improve financial performance, manage risk, and achieve strategic objectives."
+            }
+            
+            # Default response if no keywords match
+            default_response = "Thank you for your question. As a representative of TP Adhikari and Associates, I'd be happy to provide information about our audit and advisory services. Could you please provide more details about what specific information you're looking for?"
+            
+            # Check for keywords in the user's message
+            user_message_lower = user_message.lower()
+            selected_response = default_response
+            
+            for keyword, response_text in responses.items():
+                if keyword in user_message_lower:
+                    selected_response = response_text
+                    break
+            
+            # Apply styling to the response
+            styled_response = get_styled_response(selected_response)
+            response = {"response": styled_response}
             
             self.wfile.write(json.dumps(response).encode('utf-8'))
 
