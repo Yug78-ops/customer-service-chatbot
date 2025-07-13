@@ -31,68 +31,7 @@
     </div>
 </div>
 
-<script>
-    const chatMessages = document.getElementById('chat-messages');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    const suggestedQuestions = document.querySelector('.suggested-questions'); // Get suggested questions container
-
-    sendButton.addEventListener('click', sendMessage);
-
-    // Add event listener for "Enter" key
-    messageInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault(); // Prevent default behavior (newline)
-            sendMessage();
-        }
-    });
-
-    // Event listener for suggested questions
-    suggestedQuestions.addEventListener('click', function(event) {
-        if (event.target.tagName === 'BUTTON') {
-            messageInput.value = event.target.dataset.question;
-            // Optionally, send the message automatically:
-            sendMessage(); // Uncomment to send automatically
-        }
-    });
-
-    function sendMessage() {
-        const message = messageInput.value;
-        if (message.trim() === '') return;
-
-        appendMessage('user-message', message);
-        messageInput.value = '';
-
-        fetch('/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message: message })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.response) {
-                appendMessage('bot-message', data.response);
-            } else if (data.error) {
-                appendMessage('bot-message', `Error: ${data.error}`);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            appendMessage('bot-message', 'Sorry, an error occurred.');
-        });
-    }
-
-    function appendMessage(senderClass, message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add(senderClass);
-        messageDiv.innerHTML = message;
-
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-</script>
+<script src="static/js/script.js"></script>
 <div class="bot-message">
     <span class="bot-response-text">
         <br><br>

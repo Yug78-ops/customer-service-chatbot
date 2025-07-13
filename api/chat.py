@@ -30,9 +30,30 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         
-        # Always return a simple hardcoded response
-        response = {
-            "response": "<span class='bot-response-text'>Hello! I'm working now. This is a test response from TP Adhikari and Associates. How can I help you today?</span>"
-        }
+        # Get the content length to read the request body
+        content_length = int(self.headers.get('Content-Length', 0))
+        
+        try:
+            # Read the request body if it exists
+            if content_length > 0:
+                request_body = self.rfile.read(content_length).decode('utf-8')
+                request_data = json.loads(request_body)
+                user_message = request_data.get('message', '')
+                
+                # Log the message we received (helpful for debugging)
+                print(f"Received message: {user_message}")
+                
+                # Generate a response based on the user message
+                bot_response = f"<span class='bot-response-text'>You asked: '{user_message}'. This is a test response from TP Adhikari and Associates. How can I help you further?</span>"
+            else:
+                bot_response = "<span class='bot-response-text'>Hello! I'm working now. This is a test response from TP Adhikari and Associates. How can I help you today?</span>"
+                
+            response = {
+                "response": bot_response
+            }
+        except Exception as e:
+            response = {
+                "error": str(e)
+            }
         
         self.wfile.write(json.dumps(response).encode('utf-8'))
